@@ -95,101 +95,15 @@
 
 	<script>
 		function iPaperInit() {
-			console.log('iPaperInit');
-
-			// Set event settings on embedded flipbook
-			iPaperAPI.updateEventSettings({
-				onBasketClick: { preventDefault: true }
-			});
 
 			// Check the ready promise
 			iPaperAPI.ready().then(function () {
 				logEvent('InitEvent', 'init');
 			});
 
-			// Magic callbacks that are called from events dispatched from iframe
-			iPaperAPI.onPageElementClick = function (data) { logEvent('Magic callback', 'onPageElementClick', data); }
-			iPaperAPI.onSpreadChange = function (data) { logEvent('Magic callback', 'onSpreadChange', data); }
-			iPaperAPI.onBasketClick = function () { logEvent('Magic callback', 'onBasketClick'); }
-			iPaperAPI.onItemAdd = function (data) { logEvent('Magic callback', 'onItemAdd', data); }
-			iPaperAPI.onCookieConsentUpdate = function (data) { logEvent('Magic callback', 'onCookieConsentUpdate', data); }
-
 			// For those who prefer event-based approach, that is also possible:
-			var iPaperIFrame = document.querySelector('iframe');
-			iPaperIFrame.addEventListener('onPageElementClick', function (e) { logEvent('CustomEvent', 'onPageElementClick', e.detail); })
-			iPaperIFrame.addEventListener('onSpreadChange', function (e) { logEvent('CustomEvent', 'onSpreadChange', e.detail); });
-			iPaperIFrame.addEventListener('onBasketClick', function (e) { logEvent('CustomEvent', 'onBasketClick'); });
+			var iPaperIFrame = document.querySelector('#ipaper-iframe');
 			iPaperIFrame.addEventListener('onItemAdd', function (e) { logEvent('CustomEvent', 'onItemAdd', e.detail); });
-			iPaperIFrame.addEventListener('onCookieConsentUpdate', function (e) {
-				document.getElementById('cookies--performance').checked = !!e.detail.allowPerformanceCookies;
-				document.getElementById('cookies--functional').checked = !!e.detail.allowFunctionalCookies;
-				document.getElementById('cookies--advertising').checked = !!e.detail.allowAdvertisingCookies;
-				logEvent('CustomEvent', 'onCookieConsentUpdate', e.detail);
-			});
-
-			// Setting up interactions with API that will call magic commands
-			document.getElementById('go-to-page').addEventListener('click', function (e) {
-				var pageNumber = +document.getElementById(e.target.getAttribute('data-value-element')).value;
-
-				// Users can call a method from the API
-				//iPaperAPI.goToPage(pageNumber);
-
-				// Alternatively, they can call it on the API instance itself:
-				iPaperAPI.trigger('goToPage', pageNumber);
-			});
-			document.getElementById('go-to-next-page').addEventListener('click', async function () {
-				iPaperAPI.goToNextPage();
-			});
-			document.getElementById('go-to-previous-page').addEventListener('click', function () {
-				iPaperAPI.goToPreviousPage();
-			});
-			document.getElementById('add-item').addEventListener('click', function (e) {
-				var shopItem = JSON.parse(document.getElementById(e.target.getAttribute('data-value-element')).value);
-				iPaperAPI.addItem(shopItem);
-			});
-
-
-			// It is possible to dynamically update flipbook event handler settings
-			document.getElementById('on-basket-click-event-handler').addEventListener('change', function (e) {
-				iPaperAPI.updateEventSettings({
-					onBasketClick: { preventDefault: e.target.checked }
-				});
-			});
-			document.getElementById('on-page-element-click-event-handler').addEventListener('change', function (e) {
-				iPaperAPI.updateEventSettings({
-					onPageElementClick: { preventDefault: e.target.checked }
-				});
-			});
-			document.getElementById('on-item-add-click-event-handler').addEventListener('change', function (e) {
-				iPaperAPI.updateEventSettings({
-					onItemAdd: { preventDefault: e.target.checked }
-				});
-			});
-
-
-			// Cookie consent
-			document.getElementById('update-cookie-consent').addEventListener('click', function () {
-				iPaperAPI.updateCookieConsent({
-					allowPerformanceCookies: document.getElementById('cookies--performance').checked,
-					allowFunctionalCookies: document.getElementById('cookies--functional').checked,
-					allowAdvertisingCookies: document.getElementById('cookies--advertising').checked
-				});
-			});
-			document.getElementById('get-cookie-consent').addEventListener('click', async function (e) {
-				e.target.disabled = true;
-				const response = await iPaperAPI.trigger('getCookieConsent');
-				e.target.disabled = false;
-				document.getElementById('retrieved-cooke-consent').value = JSON.stringify(response, null, '    ');
-			});
-
-
-			// Destroy API instance
-			document.getElementById('destroy-api').addEventListener('click', function () {
-				iPaperAPI.destroy().then(function () {
-					logEvent('DestroyEvent', 'destroy');
-					alert('iPaper API instance successfully destroyed. Your controls should stop working now.');
-				});
-			});
 		}
 	</script>
 </body>
