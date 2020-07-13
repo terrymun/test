@@ -1,15 +1,240 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <title>Test</title>
-  <style>
-    iframe {
-      width: 75vw;
-      height: 400px;
-    }
-  </style>
-</head>
-<body>
-  <iframe src="https://demopartner.ipapercms.dk/terry/lorem-ipsum/?page=1#/"></iframe>
-</body>
+	<head>
+		<title>IP-7243: Simplification of JS API (Single iframe)</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/4.1.1/es6-promise.min.js"></script>
+		<!-- Start of async iPaper Flipbook API script -->
+    <script>
+    (function(i,P,a,p,e,r){if(i.getElementById(a=a+'-'+e))return;
+    r=i.querySelector(P).parentNode.appendChild(i.createElement(P));
+    r.id=a;r.async=1;r.src=p+'/'+e+'.js'})
+    (document,'script','ipaper-flipbook-api','https://cdn.ipaper.io/api','MzY6NWM4NDZiMTktMmQ2NS00NzZjLTlhYjItZDA0ZmU0MDZmNGIw');
+    </script>
+    <!-- End of async iPaper Flipbook API script -->
+		<script>
+			// Event logger
+			function logEvent(source, eventName, data) {
+				var eventList = document.getElementById('event-log')
+				var eventElement = document.createElement('li');
+				eventElement.classList.add('monospace-font');
+				eventElement.innerHTML = '<strong>Source</strong>: ' + source + '<br /><strong>Event/method:</strong> ' + eventName + '<br /><strong>Stringified data:</strong> ' + JSON.stringify(data || null);
+
+				eventList.appendChild(eventElement);
+				eventList.scrollTop = eventList.scrollHeight;
+			}
+
+			document.addEventListener('DOMContentLoaded', function() {
+				document.getElementById('clear-event-log').addEventListener('click', function() {
+					document.getElementById('event-log').innerHTML = '';
+				});
+			});
+		</script>
+		<style>
+			body {
+				padding: 1rem;
+				background-color: #eee;
+				font-family: Arial, Helvetica, sans-serif;
+			}
+			iframe {
+				display: block;
+				width: 100%;
+				height: 600px;
+			}
+			fieldset {
+				margin-bottom: 1rem;
+			}
+			.monospace-font {
+				font-family: Consolas, Courier, monospace;
+			}
+			#event-log {
+				height: 10rem;
+				border: 1px solid #333;
+				padding: 1rem 1rem 1rem 2rem;
+				background-color: rgba(255,255,255,.5);
+				overflow-y: auto;
+				position: relative;
+			}
+			#event-log::before {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				display: block;
+				content: 'No events logged yet. Start interacting with flipbook or dispatch commands.';
+				text-align: center;
+				transform: translate(-50%, -50%);
+				opacity: 0;
+				pointer-events: none;
+				transition: all .5 ease-in-out;
+			}
+			#event-log:empty::before {
+				opacity: 0.5;
+				pointer-events: auto;
+			}
+			#event-log li {
+				margin-bottom: 1rem;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Single iframe</h1>
+		<p><a href="./index.html">&laquo; Back to index</a></p>
+		<p>Use the links below if you need to manually add exception to the resources used on this page:</p>
+		<a href="https://viewer.ipaper.localhost/tm/test/lorem-ipsum-demo/">Flipbook in iframe</a>
+		<a href="https://viewer.ipaper.localhost/dist/api.bundle.js">iPaper JS API</a>
+
+		<h2>Embedded flipbook</h2>
+		<iframe id="ipaper-iframe" src="https://demopartner.ipapercms.dk/terry/lorem-ipsum/?page=1" scrolling="no" frameborder="0"></iframe>
+
+		<h3>Dispatch commands to iframe</h3>
+		<form>
+			<fieldset>
+				<legend>Publication</legend>
+				<button id="go-to-page" type="button" data-value-element="go-to-page__value">Go to page</button><input type="number" id="go-to-page__value" value="1" placeholder="1" min="1" /><br />
+				<button id="go-to-previous-page" type="button">&laquo; Go to previous page</button> <button id="go-to-next-page" type="button">Go to next page&raquo;</button><br />
+			</fieldset>
+
+			<fieldset>
+				<legend>Shop</legend>
+				<textarea id="add-item__value" style="width: 400px;" rows="8">{
+    "title": "My product",
+    "description": "Product description",
+    "productId": "PROD-25B",
+    "price": 29.95,
+    "originPage": 6,
+    "quantity": 1
+}</textarea><br />
+				<button id="add-item" type="button" data-value-element="add-item__value">Add item</button>
+			</fieldset>
+
+			<fieldset>
+				<legend>Flipbook events</legend>
+				<label><input type="checkbox" id="on-basket-click-event-handler" checked /> Disable shop opening on basket click</label><br />
+				<label><input type="checkbox" id="on-page-element-click-event-handler" /> Disable handling of shop item on page element click</label><br />
+				<label><input type="checkbox" id="on-item-add-click-event-handler" /> Disable adding of item(s) to basket</label>
+			</fieldset>
+
+			<fieldset>
+				<legend>Cookie consent (setter)</legend>
+				<label><input type="checkbox" id="cookies--performance" /> Allow performance cookies</label><br />
+				<label><input type="checkbox" id="cookies--functional" /> Allow functional cookies</label><br />
+				<label><input type="checkbox" id="cookies--advertising" /> Allow advertising cookies</label><br />
+				<button id="update-cookie-consent" type="button">Manually update cookie consent</button>
+			</fieldset>
+
+			<fieldset>
+				<legend>Cookie consent (getter)</legend>
+				<button id="get-cookie-consent" type="button">Get cookie consent</button><br />
+				<textarea id="retrieved-cooke-consent" readonly style="width: 400px;" rows="6"></textarea>
+			</fieldset>
+		</form>
+
+		<h3>Additional actions:</h3>
+		<button type="button" id="destroy-api">Destroy API instance</button>
+
+		<h3>Event log:</h3>
+		<button type="button" id="clear-event-log">Clear log</button>
+		<ul id="event-log"></ul>
+
+		<script>
+			function iPaperInit() {
+				console.log('iPaperInit');
+
+				// Set event settings on embedded flipbook
+				iPaperAPI.updateEventSettings({
+					onBasketClick: { preventDefault: true }
+				});
+
+				// Check the ready promise
+				iPaperAPI.ready().then(function() {
+					logEvent('InitEvent', 'init');
+				});
+
+				// Magic callbacks that are called from events dispatched from iframe
+				iPaperAPI.onPageElementClick = function(data) { logEvent('Magic callback', 'onPageElementClick', data); }
+				iPaperAPI.onSpreadChange = function(data) { logEvent('Magic callback', 'onSpreadChange', data); }
+				iPaperAPI.onBasketClick = function() { logEvent('Magic callback', 'onBasketClick'); }
+				iPaperAPI.onItemAdd = function(data) { logEvent('Magic callback', 'onItemAdd', data); }
+				iPaperAPI.onCookieConsentUpdate = function(data) { logEvent('Magic callback', 'onCookieConsentUpdate', data); }
+
+				// For those who prefer event-based approach, that is also possible:
+				var iPaperIFrame = document.querySelector('iframe');
+				iPaperIFrame.addEventListener('onPageElementClick', function(e) { logEvent('CustomEvent', 'onPageElementClick', e.detail); })
+				iPaperIFrame.addEventListener('onSpreadChange', function(e) { logEvent('CustomEvent', 'onSpreadChange', e.detail); });
+				iPaperIFrame.addEventListener('onBasketClick', function(e) { logEvent('CustomEvent', 'onBasketClick'); });
+				iPaperIFrame.addEventListener('onItemAdd', function(e) { logEvent('CustomEvent', 'onItemAdd', e.detail); });
+				iPaperIFrame.addEventListener('onCookieConsentUpdate', function(e) {
+					document.getElementById('cookies--performance').checked = !!e.detail.allowPerformanceCookies;
+					document.getElementById('cookies--functional').checked = !!e.detail.allowFunctionalCookies;
+					document.getElementById('cookies--advertising').checked = !!e.detail.allowAdvertisingCookies;
+					logEvent('CustomEvent', 'onCookieConsentUpdate', e.detail);
+				});
+
+				// Setting up interactions with API that will call magic commands
+				document.getElementById('go-to-page').addEventListener('click', function(e) {
+					var pageNumber = +document.getElementById(e.target.getAttribute('data-value-element')).value;
+
+					// Users can call a method from the API
+					//iPaperAPI.goToPage(pageNumber);
+
+					// Alternatively, they can call it on the API instance itself:
+					iPaperAPI.trigger('goToPage', pageNumber);
+				});
+				document.getElementById('go-to-next-page').addEventListener('click', async function() {
+					iPaperAPI.goToNextPage();
+				});
+				document.getElementById('go-to-previous-page').addEventListener('click', function() {
+					iPaperAPI.goToPreviousPage();
+				});
+				document.getElementById('add-item').addEventListener('click', function(e) {
+					var shopItem = JSON.parse(document.getElementById(e.target.getAttribute('data-value-element')).value);
+					iPaperAPI.addItem(shopItem);
+				});
+
+
+				// It is possible to dynamically update flipbook event handler settings
+				document.getElementById('on-basket-click-event-handler').addEventListener('change', function(e) {
+					iPaperAPI.updateEventSettings({
+						onBasketClick: { preventDefault: e.target.checked }
+					});
+				});
+				document.getElementById('on-page-element-click-event-handler').addEventListener('change', function(e) {
+					iPaperAPI.updateEventSettings({
+						onPageElementClick: { preventDefault: e.target.checked }
+					});
+				});
+				document.getElementById('on-item-add-click-event-handler').addEventListener('change', function(e) {
+					iPaperAPI.updateEventSettings({
+						onItemAdd: { preventDefault: e.target.checked }
+					});
+				});
+
+
+				// Cookie consent
+				document.getElementById('update-cookie-consent').addEventListener('click', function() {
+					iPaperAPI.updateCookieConsent({
+						allowPerformanceCookies: document.getElementById('cookies--performance').checked,
+						allowFunctionalCookies: document.getElementById('cookies--functional').checked,
+						allowAdvertisingCookies: document.getElementById('cookies--advertising').checked
+					});
+				});
+				document.getElementById('get-cookie-consent').addEventListener('click', async function(e) {
+					e.target.disabled = true;
+					const response = await iPaperAPI.trigger('getCookieConsent');
+					e.target.disabled = false;
+					document.getElementById('retrieved-cooke-consent').value = JSON.stringify(response, null, '    ');
+				});
+
+
+				// Destroy API instance
+				document.getElementById('destroy-api').addEventListener('click', function() {
+					iPaperAPI.destroy().then(function() {
+						logEvent('DestroyEvent', 'destroy');
+						alert('iPaper API instance successfully destroyed. Your controls should stop working now.');
+					});
+				});
+			}
+		</script>
+	</body>
 </html>
