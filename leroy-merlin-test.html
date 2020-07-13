@@ -81,6 +81,24 @@
 		#event-log li {
 			margin-bottom: 1rem;
 		}
+
+		#modal {
+			position: fixed;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background-color: rgba(255,255,255,0.75);
+		}
+
+		#modal-content {
+			padding: 2rem;
+			box-shadow: 0 0 1rem rgba(0,0,0,0.25);
+			background-color: rgb(255,255,255);
+		}
 	</style>
 </head>
 
@@ -93,7 +111,27 @@
 	<button type="button" id="clear-event-log">Clear log</button>
 	<ul id="event-log"></ul>
 
+	<div id="modal" style="display: none;">
+		<div id="modal-content"></div>
+	</div>
+
 	<script>
+		const modal = document.querySelector('#modal');
+		const modalContent = document.querySelector('#modal-content');
+		function notify({ productId, quantity, price }) {
+			modal.style.display = 'flex';
+			modalContent.innerHTML = `<ul>
+	<li>Product ID: ${productId}</li>
+	<li>Quantity: ${quantity}</li>
+	<li>Price: ${price}</li>
+</ul>`;
+		}
+
+		modal.addEventListener('click', (e) => {
+			modal.style.display = 'none';
+			modalContent.innerHTML = '';
+		});
+
 		function iPaperInit() {
 
 			// Check the ready promise
@@ -103,7 +141,10 @@
 
 			// For those who prefer event-based approach, that is also possible:
 			var iPaperIFrame = document.querySelector('#ipaper-iframe');
-			iPaperIFrame.addEventListener('onItemAdd', function (e) { logEvent('CustomEvent', 'onItemAdd', e.detail); });
+			iPaperIFrame.addEventListener('onItemAdd', function (e) {
+				logEvent('CustomEvent', 'onItemAdd', e.detail);
+				notify(e.detail);
+			});
 		}
 	</script>
 </body>
